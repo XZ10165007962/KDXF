@@ -52,7 +52,6 @@ def cv_model(clf,train_x,train_y,test_x,clf_name):
 
             model = clf.train(params,train_set = train_matrix,num_boost_round = 50000,valid_sets = [train_matrix,valid_matrix],
             categorical_feature = [], verbose_eval = 3000, early_stopping_rounds = 200)
-
             val_pred = model.predict(data=val_x,num_iteration=model.best_iteration)
             test_pred = model.predict(data=test_x,num_iteration=model.best_iteration)
             print(list(
@@ -104,6 +103,8 @@ def cv_model(clf,train_x,train_y,test_x,clf_name):
         test += test_pred / kf.n_splits
         cv_scores.append(roc_auc_score(val_y, val_pred))
 
+    print("保存训练集结果")
+    np.savetxt(clf_name+"train.csv", train, delimiter=",")
     print("%s_scotrainre_list:" % clf_name, cv_scores)
     print("%s_score_mean:" % clf_name, np.mean(cv_scores))
     print("%s_score_std:" % clf_name, np.std(cv_scores))
@@ -127,8 +128,8 @@ def cat_model(x_train,y_train,x_test):
 
 if __name__=="__main__":
     # 数据预处理
-    train = pd.read_csv(r'F:\data\电信客户流失预测挑战赛数据集\train.csv')
-    test = pd.read_csv(r'F:\data\电信客户流失预测挑战赛数据集\test.csv')
+    train = pd.read_csv('data/train.csv')
+    test = pd.read_csv('data/test.csv')
     data = pd.concat([train, test], axis=0, ignore_index=True)
 
     # 训练数据/测试数据准备
