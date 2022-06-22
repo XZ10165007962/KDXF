@@ -37,9 +37,9 @@ def cv_model(clf,train_x,train_y,test_x,clf_name):
                 'boosting_type':'gbdt',
                 'objective':'binary', # 二分类问题
                 'metric':'auc', # auc评价指标
-                'min_child_weight':5,
-                'num_leave':2**5,
-                'lanbda_l2':10,
+                'min_child_weight':3,
+                'num_leaves':2**5,
+                'lambda_l2':10,
                 'feature_fraction':0.75,
                 'bagging_fraction':0.75,
                 'bagging_freq':10,
@@ -74,10 +74,11 @@ def cv_model(clf,train_x,train_y,test_x,clf_name):
                       'lambda': 9,
                       'subsample': 0.8,
                       'colsample_bytree': 0.8,
-                      'eta': 0.15,
+                      'eta': 0.1,
                       'tree_method': 'exact',
                       'seed': 2022,
-                      'nthread': 36,                      "silent": True,
+                      'nthread': 36,
+                      "silent": True,
                       }
 
             watchlist = [(train_matrix, 'train'), (valid_matrix, 'eval')]
