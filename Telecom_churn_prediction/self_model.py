@@ -104,8 +104,6 @@ def cv_model(clf,train_x,train_y,test_x,clf_name):
         test += test_pred / kf.n_splits
         cv_scores.append(roc_auc_score(val_y, val_pred))
 
-    print("保存训练集结果")
-    np.savetxt(clf_name+"train.csv", train, delimiter=",")
     print("%s_scotrainre_list:" % clf_name, cv_scores)
     print("%s_score_mean:" % clf_name, np.mean(cv_scores))
     print("%s_score_std:" % clf_name, np.std(cv_scores))
@@ -160,6 +158,7 @@ if __name__=="__main__":
     print("*****************lgb模型训练**********************")
     lgb_train, lgb_test = lgb_model(x_train, y_train, x_test)
     test['是否流失_lgb'] = lgb_test
+    train["是否流失_train"] = lgb_train
     print("*****************xgb模型训练**********************")
     xgb_train, xgb_test = xgb_model(x_train, y_train, x_test)
     test['是否流失_xgb'] = xgb_test
@@ -167,6 +166,11 @@ if __name__=="__main__":
     cat_train, cat_test = cat_model(x_train, y_train, x_test)
     test['是否流失_cat'] = cat_test
 
+    print("保存训练集结果")
+    train.to_csv('submit_data/train_lgb.csv', index=False)
+
+    print("保存测试集结果")
     test['是否流失'] = (test['是否流失_lgb'] + test['是否流失_xgb'] + test['是否流失_cat'])/3
-    test.to_csv('sub_all.csv', index=False)
-    test[['客户ID', '是否流失']].to_csv('sub_sample.csv', index=False)
+    test.to_csv('submit_data/test_all.csv', index=False)
+
+    test[['客户ID', '是否流失']].to_csv('submit_data/sub_all.csv', index=False)
