@@ -9,50 +9,51 @@
 """
 
 import torch
+from torch.autograd import Variable
 from torch.utils.data import DataLoader,Dataset
 import pandas as pd
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 
+print("Loading data...")
+data_root = "data/nn_data.csv"
+train_ = np.loadtxt(data_root, encoding="UTF-8", skiprows=1,delimiter=',')
+
+print("Split data...")
+VAL_RATIO = 0.3
+percent = int(train_.shape[0] * (1-VAL_RATIO))
+train, val = train_[:percent], train_[:percent]
+train_x, train_y = train[:, :-1], train[:, -1:]
+val_x, val_y = val[:, :-1], val[:, -1:]
+
+
+class myData(Dataset):
+	def __init__(self, x, y=None):
+		self.data = torch.from_numpy(x).float()
+		if y is not None:
+			self.label = torch.from_numpy(y).float()
+		else:
+			self.label = None
+
+	def __len__(self):
+		return len(self.data)
+
+	def __getitem__(self, index):
+		if self.label is not None:
+			return self.data[index], self.label[index]
+		else:
+			return self.data[index]
+
+
+train_set = myData(train_x, train_y)
+val_set = myData(val_x, val_y)
+
 # 超参数
 num_epochs = 15
-batch_size = 128
+batch_size = 64
 learning_rate = 1e-3
-
-
-class trainData(Dataset):
-	def __init__(self, train_path):
-		self.train_data = pd.read_csv(train_path)
-		# self.train_data = np.loadtxt(train_path)
-		self.target = self.train_data["是否流失"].values
-		fliter_fea = ['未应答数据呼叫的平均次数','平均呼叫转移呼叫数','平均占线数据调用次数','平均丢弃数据呼叫数',"是否流失"]
-		use_fea = [i for i in self.train_data.columns if i not in fliter_fea]
-		self.data = self.train_data[use_fea].values
-
-	def __len__(self):
-		return len(self.train_data)
-
-	def __getitem__(self, index):
-		return self.data[index], self.target[index]
-
-
-class testData(Dataset):
-	def __init__(self, test_path):
-		self.test_data = pd.read_csv(test_path)
-		fliter_fea = ['未应答数据呼叫的平均次数', '平均呼叫转移呼叫数', '平均占线数据调用次数', '平均丢弃数据呼叫数']
-		use_fea = [i for i in self.test_data.columns if i not in fliter_fea]
-		self.data = self.test_data[use_fea].values
-
-	def __len__(self):
-		return len(self.test_data)
-
-	def __getitem__(self, index):
-		return self.data[index]
-
-
-train_set = trainData('data/train.csv')
-test_set = testData('data/test.csv')
+channels = train_x.shape[1]
 
 train_loader = DataLoader(
 	dataset=train_set,
@@ -60,7 +61,7 @@ train_loader = DataLoader(
 	shuffle=True
 )
 test_loader = DataLoader(
-	dataset=test_set,
+	dataset=val_set,
 	batch_size=batch_size,
 	shuffle=False
 )
@@ -69,14 +70,14 @@ test_loader = DataLoader(
 class CnnNet(nn.Module):
 	def __init__(self):
 		super(CnnNet, self).__init__()
-		self.conv1 = nn.Conv1d(in_channels=128, out_channels=10, kernel_size=5, stride=2)
+		self.conv1 = nn.Conv1d(in_channels=1, out_channels=10, kernel_size=4, stride=2)
 		# self.max_pool1 = nn.MaxPool1d(kernel_size=5)
 		self.conv2 = nn.Conv1d(10, 20, 5, 2)
 		self.conv3 = nn.Conv1d(20, 40, 3)
-
-		self.liner1 = nn.Linear(440, 120)
+		self.flatten = nn.Flatten()
+		self.liner1 = nn.Linear(480, 120)
 		self.liner2 = nn.Linear(120, 84)
-		self.liner3 = nn.Linear(84, 128)
+		self.liner3 = nn.Linear(84, 1)
 
 	def forward(self, x):
 		x = self.conv1(x)
@@ -85,12 +86,14 @@ class CnnNet(nn.Module):
 		x = F.relu(x)
 		x = self.conv3(x)
 
-		x = x.view(-1, 440)
+		# x = x.view(x.shape[0], -1)
+		x = self.flatten(x)
 		x = self.liner1(x)
 		x = self.liner2(x)
 		x = self.liner3(x)
 
 		return x
+
 
 # 定义损失与优化器
 model = CnnNet()
@@ -101,8 +104,7 @@ for epoch in range(num_epochs):
 	print("*************epcoh_{}*************".format(epoch+1))
 	for i, (x, y) in enumerate(train_loader):
 		optimize.zero_grad()
-		x = torch.tensor(x, dtype=torch.float)
-		y = torch.tensor(y, dtype=torch.float).view(-1,128)
+		x = x.view(x.shape[0], -1, 64)
 		pre = model(x)
 		loss = criterion(pre, y)
 		loss.backward()
@@ -111,5 +113,5 @@ for epoch in range(num_epochs):
 		if (i + 1) % 100 == 0:
 			print(
 				"Epoch[{}/{}], Step [{}/{}], Reconst Loss: {:.4f}"
-					.format(epoch + 1, num_epochs, i + 1, len(train_loader), loss.item())
+				.format(epoch + 1, num_epochs, i + 1, len(train_loader), loss.item())
 			)
