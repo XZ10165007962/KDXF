@@ -35,36 +35,59 @@ train_xuqiu_data["year"] = train_xuqiu_data["date"].dt.year
 train_xuqiu_data["month"] = train_xuqiu_data["date"].dt.month
 
 test_xuqiu_data["date"] = pd.to_datetime(test_xuqiu_data["date"])
+test_xuqiu_data["year_month"] = test_xuqiu_data["date"].dt.strftime("%Y%m")
 test_xuqiu_data["year"] = test_xuqiu_data["date"].dt.year
 test_xuqiu_data["month"] = test_xuqiu_data["date"].dt.month
 
 train_data = train_xuqiu_data.merge(train_dingdan_data, how="left", on=["product_id", "year", "month"])
 test_data = test_xuqiu_data.merge(test_dingdan_data, how="left", on=["product_id", "year", "month"])
 
+data = pd.concat([train_data, test_data]).reset_index(drop=True)
+data = data.sort_values(['product_id', 'year_month'])
+
+# 获取数据最早的售卖月份
+simple = data[data["label"] > 0]
+simple["qty_first_month"] = simple.groupby(["product_id"])["year_month"].transform("first")
+simple = simple.loc[:, ["product_id", "qty_first_month"]].drop_duplicates()
+data = data.merge(simple, on=["product_id"], how="left")
+# 过滤还未售卖的时间
+data = data[data["qty_first_month"] <= data["year_month"]].reset_index(drop=True)
+
+# 数据分类,想通过变异系数进行稳定数据与不稳定数据划分
+simple = data[~data["label"].isnull()]
+simple["label_sum"] = simple.groupby(["product_id"])["label"].transform("sum")
+simple["label_mean"] = simple.groupby(["product_id"])["label"].transform("mean")
+simple["label_std"] = simple.groupby(["product_id"])["label"].transform("std")
+simple["label_cv"] = simple["label_std"] / simple["label_mean"]
+simple["sale_count"] = simple.groupby(["product_id", "year_month"])["is_sale_day"].transform("sum")
+simple = simple.loc[:, ["product_id", "label_sum", "label_mean", "label_std", "label_cv", "sale_count"]].drop_duplicates()
+data = data.merge(simple, on=["product_id"], how="left")
+
+"""
+在训练集中未发生售卖事件的商品
+1117 1131 1140 1141 1142 1143 1145 1146 1147 1148 1149 1150 1151 1152
+1153 1154 1155 1156 1157 1158 1159 1160 1161 1162
+"""
+# simple = simple.loc[:, ["product_id", "label_cv"]].drop_duplicates()
+# print(simple)
+
 # 月汇集
-train_data["label_month"] = train_data.groupby(["product_id", "year", "month"])["label"].transform("sum")
+data["label_month"] = data.groupby(["product_id", "year", "month"])["label"].transform("sum")
+data = data.drop_duplicates(["product_id", "year", "month"]).reset_index(drop=True)
 
-del train_data["date"]
-del train_data["label"]
-del test_data["date"]
-
-train_data = train_data.drop_duplicates(["product_id", "year", "month"])
-test_data = test_data.drop_duplicates(["product_id", "year", "month"])
-
-# 将离散数据进行编码
-lisan_col = ["product_id", "type", "year"]
-for col in lisan_col:
-	train_data[col] = pd.factorize(train_data[col])[0]
-
-for col in lisan_col:
-	test_data[col] = pd.factorize(test_data[col])[0]
+# 获取销售的月份数量，进行新品主品数据的判断
+simple = data[~data["label"].isnull()]
+simple["qty_month_count"] = simple.groupby(["product_id"])["year_month"].transform("count")
+simple = simple.loc[:, ["product_id", "qty_month_count"]].drop_duplicates()
+data = data.merge(simple, on=["product_id"], how="left")
 
 print("sucess transform data")
-print(train_data.shape)
-print(test_data.shape)
-del train_data["year"]
-del test_data["year"]
+# del data["date"]
+del data["label"]
+del data["is_sale_day"]
+del data["year_month"]
+del data["qty_first_month"]
+data["date_block_num"] = (data["year"] - 2018) * 12 + data["month"]
 # 保存数据
-train_data.to_csv(config.save_train_path, index=False)
-test_data.to_csv(config.save_test_path, index=False)
+data.to_csv(config.save_data_path, index=False)
 print("save data done")

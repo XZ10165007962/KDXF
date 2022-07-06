@@ -136,18 +136,34 @@ def one_model(clf, train_x, train_y, test_x, clf_name, val_time):
         params = {
             'boosting_type': 'gbdt',
             'objective': 'tweedie',  # 回归问题
-            'metric': 'L2 loss',  # 评价指标
+            'metric': 'tweedie',  # 评价指标
             'min_child_weight': 3,
             'num_leaves': 2 ** 5,
             'lambda_l2': 10,
             'feature_fraction': 0.75,
             'bagging_fraction': 0.75,
             'bagging_freq': 10,
-            'learning_rate': 0.05,
+            'learning_rate': 0.15,
             'seed': 2022,
             # 'max_depth': 10,
             'verbose': -1,
             'n_jobs': -1
+        }
+        params = {
+            'objective': 'tweedie',
+            'tweedie_variance_power': 1.6,
+            'metric': 'mse',
+            'num_leaves': 2 ** 7 - 1,
+            'reg_lambda': 50,
+            'colsample_bytree': 0.6,
+            'subsample': 0.6,
+            'subsample_freq': 4,
+            'learning_rate': 0.015,
+            'n_estimators': 2000,
+            'seed': 1024,
+            'n_jobs': -1,
+            'silent': True,
+            'verbose': -1,
         }
 
         model = clf.train(
