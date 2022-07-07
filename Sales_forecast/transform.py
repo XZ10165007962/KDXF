@@ -26,7 +26,16 @@ pd.set_option('max_colwidth', 100)
 
 
 # 用来做滑动和滞后特征的函数
-def makelag(data_, values, window, shift=1):
+def makelag(data_, values, window, shift=1, if_type=False):
+	"""
+	滑窗特征跟之后特征
+	:param if_type: 是否滑动type类型
+	:param data_: 输入数据
+	:param values: 目标字段字段
+	:param window: 滑窗大小
+	:param shift: 步幅
+	:return:
+	"""
 	lags = [i + shift for i in range(window)]
 	rollings = [i for i in range(2, window)]
 	for lag in lags:
@@ -37,15 +46,17 @@ def makelag(data_, values, window, shift=1):
 		data_[f's_{shift}_roll_{rolling}_median'] = values.shift(shift).rolling(window=rolling).median()
 		data_[f's_{shift}_roll_{rolling}_std'] = values.shift(shift).rolling(window=rolling).std()
 		data_[f's_{shift}_roll_{rolling}_mean'] = values.shift(shift).rolling(window=rolling).mean()
-
-	for lag in lags:
-		data_[f'type_lag_{lag}'] = data_.groupby(['type', 'date_block_num'])[f'lag_{lag}'].transform('mean')
+	if if_type:
+		for lag in lags:
+			data_[f'type_lag_{lag}'] = data_.groupby(['type', 'date_block_num'])[f'lag_{lag}'].transform('mean')
 
 	return data_
 
 
 def trans_data(data_):
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['label_month'], 3))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['label_month'], 3, True))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['order'], 3, True))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['start_stock'], 3, True))
 	data_["type"] = pd.factorize(data_["type"])[0]
 
 	# 类别特征的encoding
@@ -64,5 +75,4 @@ if __name__ == '__main__':
 		1157, 1158, 1159, 1160, 1161, 1162
 	]
 	data = trans_data(data)
-
 	data.to_csv(config.save_trans_data_path, index=False)
