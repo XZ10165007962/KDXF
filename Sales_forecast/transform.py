@@ -26,9 +26,10 @@ pd.set_option('max_colwidth', 100)
 
 
 # 用来做滑动和滞后特征的函数
-def makelag(data_, values, window, shift=1, if_type=False):
+def makelag(data_, values, columns, window, shift=1, if_type=False):
 	"""
-	滑窗特征跟之后特征
+	滑窗特征跟滞后特征
+	:param columns: 字段名
 	:param if_type: 是否滑动type类型
 	:param data_: 输入数据
 	:param values: 目标字段字段
@@ -39,13 +40,13 @@ def makelag(data_, values, window, shift=1, if_type=False):
 	lags = [i + shift for i in range(window)]
 	rollings = [i for i in range(2, window)]
 	for lag in lags:
-		data_[f'lag_{lag}'] = values.shift(lag)
+		data_[f'{columns}_lag_{lag}'] = values.shift(lag)
 	for rolling in rollings:
-		data_[f's_{shift}_roll_{rolling}_min'] = values.shift(shift).rolling(window=rolling).min()
-		data_[f's_{shift}_roll_{rolling}_max'] = values.shift(shift).rolling(window=rolling).max()
-		data_[f's_{shift}_roll_{rolling}_median'] = values.shift(shift).rolling(window=rolling).median()
-		data_[f's_{shift}_roll_{rolling}_std'] = values.shift(shift).rolling(window=rolling).std()
-		data_[f's_{shift}_roll_{rolling}_mean'] = values.shift(shift).rolling(window=rolling).mean()
+		data_[f's_{columns}_roll_{rolling}_min'] = values.shift(shift).rolling(window=rolling).min()
+		data_[f's_{columns}_roll_{rolling}_max'] = values.shift(shift).rolling(window=rolling).max()
+		data_[f's_{columns}_roll_{rolling}_median'] = values.shift(shift).rolling(window=rolling).median()
+		data_[f's_{columns}_roll_{rolling}_std'] = values.shift(shift).rolling(window=rolling).std()
+		data_[f's_{columns}_roll_{rolling}_mean'] = values.shift(shift).rolling(window=rolling).mean()
 	if if_type:
 		for lag in lags:
 			data_[f'type_lag_{lag}'] = data_.groupby(['type', 'date_block_num'])[f'lag_{lag}'].transform('mean')
@@ -54,9 +55,9 @@ def makelag(data_, values, window, shift=1, if_type=False):
 
 
 def trans_data(data_):
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['label_month'], 3, True))
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['order'], 3, True))
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['start_stock'], 3, True))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['label_month'], "label_month", 3, True))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['order'], 'order', 3))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['start_stock'], 'start_stock', 3))
 	data_["type"] = pd.factorize(data_["type"])[0]
 
 	# 类别特征的encoding
