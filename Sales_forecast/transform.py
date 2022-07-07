@@ -54,10 +54,9 @@ def makelag(data_, values, columns, window, shift=1, if_type=False):
 	return data_
 
 
-def trans_data(data_):
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['label_month'], "label_month", 3, True))
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['order'], 'order', 3))
-	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['start_stock'], 'start_stock', 3))
+def trans_data(data_, window=3):
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['label_month'], "label_month", window, True))
+	data_ = data_.groupby(["product_id"]).apply(lambda x: makelag(x, x['end_stock'], 'end_stock', window))
 	data_["type"] = pd.factorize(data_["type"])[0]
 
 	# 类别特征的encoding

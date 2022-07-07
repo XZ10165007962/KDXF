@@ -8,6 +8,8 @@
 @desc: 
 """
 
+simple_data_path = "data/提交示例.csv"
+
 xuqiu_train_path = "data/商品需求训练集.csv"
 dingdan_train_path = "data/商品月订单训练集.csv"
 
@@ -19,3 +21,5 @@ save_trans_data_path = "output/trans_data.csv"
 
 save_test_pre_path = "output/test_pre.csv"
 save_train_pre_path = "output/train_pre.csv"
+
+tijiao_path = "output/tijiao.csv"

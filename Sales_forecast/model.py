@@ -117,74 +117,46 @@ def cv_model(clf, train_x, train_y, test_x, clf_name):
     return train, test
 
 
-def one_model(clf, train_x, train_y, test_x, clf_name, val_time):
-    X = copy.deepcopy(train_x)
-    y = train_y
-    trn_x = X[X["year_month"] < val_time]
-    trn_y = y.iloc[trn_x.index]
-    val_x = X[X["year_month"] == val_time]
-    val_y = y.iloc[val_x.index]
-    del trn_x["year_month"]
-    del val_x["year_month"]
-    print(trn_x.columns)
-    test_x = test_x[trn_x.columns]
+def one_model(clf, train_x, train_y, test_x, clf_name, val_x, val_y):
 
     if clf_name == 'lgb':
-        train_matrix = clf.Dataset(trn_x, label=trn_y)
+        train_matrix = clf.Dataset(train_x, label=train_y)
         valid_matrix = clf.Dataset(val_x, label=val_y)
 
         params = {
             'boosting_type': 'gbdt',
-            'objective': 'tweedie',  # 回归问题
-            'metric': 'tweedie',  # 评价指标
+            'objective': 'regression_l1',  # 回归问题
+            'metric': 'mape',  # 评价指标
             'min_child_weight': 3,
-            'num_leaves': 2 ** 5,
             'lambda_l2': 10,
-            'feature_fraction': 0.75,
-            'bagging_fraction': 0.75,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.8,
             'bagging_freq': 10,
-            'learning_rate': 0.15,
+            'learning_rate': 0.05,
             'seed': 2022,
             # 'max_depth': 10,
             'verbose': -1,
             'n_jobs': -1
         }
-        params = {
-            'objective': 'tweedie',
-            'tweedie_variance_power': 1.6,
-            'metric': 'mse',
-            'num_leaves': 2 ** 7 - 1,
-            'reg_lambda': 50,
-            'colsample_bytree': 0.6,
-            'subsample': 0.6,
-            'subsample_freq': 4,
-            'learning_rate': 0.015,
-            'n_estimators': 2000,
-            'seed': 1024,
-            'n_jobs': -1,
-            'silent': True,
-            'verbose': -1,
-        }
-
         model = clf.train(
             params, train_set=train_matrix, num_boost_round=50000, valid_sets=[train_matrix, valid_matrix],
-            categorical_feature=[], verbose_eval=3000, early_stopping_rounds=200
+            categorical_feature=[], verbose_eval=3000, early_stopping_rounds=3000
         )
         val_pred = model.predict(data=val_x, num_iteration=model.best_iteration)
         test_pred = model.predict(data=test_x, num_iteration=model.best_iteration)
         print(list(
             sorted(
-                zip(trn_x.columns, model.feature_importance('gain')),
+                zip(train_x.columns, model.feature_importance('gain')),
                 key=lambda x: x[1], reverse=True)
         ))
-        print("%s_score_std:" % clf_name, mean_absolute_error(val_y, val_pred))
+        print("%s_score:" % clf_name, mean_absolute_error(val_y, val_pred))
 
         return val_pred, test_pred
 
 
 def lgb_model(x_train, y_train, x_test, *args):
     if args is not None:
-        lgb_train, lgb_test = one_model(lgb, x_train, y_train, x_test, 'lgb', args[0])
+        lgb_train, lgb_test = one_model(lgb, x_train, y_train, x_test, 'lgb', args[0], args[1])
     else:
         lgb_train, lgb_test = cv_model(lgb, x_train, y_train, x_test, 'lgb')
     return lgb_train, lgb_test
