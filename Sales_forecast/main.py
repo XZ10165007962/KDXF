@@ -59,7 +59,7 @@ def func():
 if __name__ == '__main__':
 	# 读取原始数据
 	data = pd.read_csv(config.save_data_path)
-	data = data[data["qty_month_count"] >= 3]
+	# data = data[data["qty_month_count"] >= 3]
 	data["pre"] = [0]*data.shape[0]
 
 	for date in [37, 38, 39]:
@@ -69,16 +69,12 @@ if __name__ == '__main__':
 		columns = use_data.columns
 		del_col = [
 			"label_sum", "label_mean", "label_std", "label_cv", "label_month", "qty_month_count", "date",
-			"date_block_num", "pre"
+			"date_block_num", "pre", "product_id"
 		]
 		train_data = use_data[use_data["date_block_num"] < date-1]
 		val_data = use_data[use_data["date_block_num"] == date-1]
 		test_data = use_data[use_data["date_block_num"] == date]
-		# 过滤不需要的字段
-		del_col = [
-			"label_sum", "label_mean", "label_std", "label_cv", "label_month", "qty_month_count", "date",
-			"date_block_num"
-		]
+
 		# 目标字段
 		label = ["label_month"]
 		# 特征字段

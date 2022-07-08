@@ -23,3 +23,5 @@ save_test_pre_path = "output/test_pre.csv"
 save_train_pre_path = "output/train_pre.csv"
 
 tijiao_path = "output/tijiao.csv"
+
+if_del = False

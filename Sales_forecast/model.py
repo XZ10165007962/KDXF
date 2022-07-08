@@ -128,6 +128,7 @@ def one_model(clf, train_x, train_y, test_x, clf_name, val_x, val_y):
             'objective': 'regression_l1',  # 回归问题
             'metric': 'mape',  # 评价指标
             'min_child_weight': 3,
+            'num_leaves': 2 ** 5,
             'lambda_l2': 10,
             'feature_fraction': 0.8,
             'bagging_fraction': 0.8,

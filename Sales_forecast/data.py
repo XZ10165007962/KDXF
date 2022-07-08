@@ -46,12 +46,14 @@ data = pd.concat([train_data, test_data]).reset_index(drop=True)
 data = data.sort_values(['product_id', 'year_month'])
 
 # 获取数据最早的售卖月份
-simple = data[data["label"] > 0]
-simple["qty_first_month"] = simple.groupby(["product_id"])["year_month"].transform("first")
-simple = simple.loc[:, ["product_id", "qty_first_month"]].drop_duplicates()
-data = data.merge(simple, on=["product_id"], how="left")
-# 过滤还未售卖的时间
-data = data[data["qty_first_month"] <= data["year_month"]].reset_index(drop=True)
+# 是否删除还未售卖的数据
+if config.if_del:
+	simple = data[data["label"] > 0]
+	simple["qty_first_month"] = simple.groupby(["product_id"])["year_month"].transform("first")
+	simple = simple.loc[:, ["product_id", "qty_first_month"]].drop_duplicates()
+	data = data.merge(simple, on=["product_id"], how="left")
+	# 过滤还未售卖的时间
+	data = data[data["qty_first_month"] <= data["year_month"]].reset_index(drop=True)
 
 # 数据分类,想通过变异系数进行稳定数据与不稳定数据划分
 simple = data[~data["label"].isnull()]
@@ -87,7 +89,8 @@ print("sucess transform data")
 del data["label"]
 del data["is_sale_day"]
 del data["year_month"]
-del data["qty_first_month"]
+if config.if_del:
+	del data["qty_first_month"]
 data["date_block_num"] = (data["year"] - 2018) * 12 + data["month"]
 # 保存数据
 data.to_csv(config.save_data_path, index=False)
