@@ -47,6 +47,12 @@ def makelag(data_, values, columns, window, shift=0, if_type=False):
 		data_[f's_{columns}_roll_{rolling}_median'] = values.shift(rolling).rolling(window=rolling).median()
 		data_[f's_{columns}_roll_{rolling}_std'] = values.shift(rolling).rolling(window=rolling).std()
 		data_[f's_{columns}_roll_{rolling}_mean'] = values.shift(rolling).rolling(window=rolling).mean()
+	# for rolling in [3, 6]:
+	# 	data_[f's_{columns}_roll_{rolling}_min'] = values.shift(3).rolling(window=rolling).min()
+	# 	data_[f's_{columns}_roll_{rolling}_max'] = values.shift(3).rolling(window=rolling).max()
+	# 	data_[f's_{columns}_roll_{rolling}_median'] = values.shift(3).rolling(window=rolling).median()
+	# 	data_[f's_{columns}_roll_{rolling}_std'] = values.shift(3).rolling(window=rolling).std()
+	# 	data_[f's_{columns}_roll_{rolling}_mean'] = values.shift(3).rolling(window=rolling).mean()
 	if if_type:
 		for lag in lags:
 			data_[f'type_lag_{lag}'] = data_.groupby(['type', 'date_block_num'])[f'lag_{lag}'].transform('mean')

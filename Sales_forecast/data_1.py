@@ -53,7 +53,16 @@ data = data.merge(simple, on=["product_id", "year_month"], how="left")
 data["label_month"] = data.groupby(["product_id", "year", "month"])["label"].transform("sum")
 data = data.drop_duplicates(["product_id", "year", "month"]).reset_index(drop=True)
 
-simple = data[~data["label"].isnull()]
+# 统计售卖月份数
+# 获取第一次售卖的月份
+simple = data[data["label_month"] > 0]
+simple["qty_first_month"] = simple.groupby(["product_id"])["year_month"].transform("first")
+simple = simple.loc[:, ["product_id", "qty_first_month"]].drop_duplicates()
+data = data.merge(simple, on=["product_id"], how="left")
+# 过滤还未售卖的时间
+data_first = data[data["qty_first_month"] <= data["year_month"]].reset_index(drop=True)
+
+simple = data_first[~data_first["label"].isnull()]
 simple["qty_month_count"] = simple.groupby(["product_id"])["year_month"].transform("count")
 simple = simple.loc[:, ["product_id", "qty_month_count"]].drop_duplicates()
 data = data.merge(simple, on=["product_id"], how="left")
@@ -68,5 +77,7 @@ del data["label"]
 del data["is_sale_day"]
 del data["year_month"]
 del data["all_qty"]
+del data["qty_first_month"]
+del data["qty_month_count"]
 print(data.head())
 data.to_csv("output/data_1.csv", index=False)
