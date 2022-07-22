@@ -47,12 +47,12 @@ def makelag(data_, values, columns, window, shift=0, if_type=False):
 		data_[f's_{columns}_roll_{rolling}_median'] = values.shift(rolling).rolling(window=rolling).median()
 		data_[f's_{columns}_roll_{rolling}_std'] = values.shift(rolling).rolling(window=rolling).std()
 		data_[f's_{columns}_roll_{rolling}_mean'] = values.shift(rolling).rolling(window=rolling).mean()
-	# for rolling in [3, 6]:
-	# 	data_[f's_{columns}_roll_{rolling}_min'] = values.shift(3).rolling(window=rolling).min()
-	# 	data_[f's_{columns}_roll_{rolling}_max'] = values.shift(3).rolling(window=rolling).max()
-	# 	data_[f's_{columns}_roll_{rolling}_median'] = values.shift(3).rolling(window=rolling).median()
-	# 	data_[f's_{columns}_roll_{rolling}_std'] = values.shift(3).rolling(window=rolling).std()
-	# 	data_[f's_{columns}_roll_{rolling}_mean'] = values.shift(3).rolling(window=rolling).mean()
+	# 	for rolling in rollings:
+	# 		data_[f's_{columns}_roll_{lag}_{rolling}_min'] = values.shift(lag).rolling(window=rolling).min()
+	# 		data_[f's_{columns}_roll_{lag}_{rolling}_max'] = values.shift(lag).rolling(window=rolling).max()
+	# 		data_[f's_{columns}_roll_{lag}_{rolling}_median'] = values.shift(lag).rolling(window=rolling).median()
+	# 		data_[f's_{columns}_roll_{lag}_{rolling}_std'] = values.shift(lag).rolling(window=rolling).std()
+	# 		data_[f's_{columns}_roll_{lag}_{rolling}_mean'] = values.shift(lag).rolling(window=rolling).mean()
 	if if_type:
 		for lag in lags:
 			data_[f'type_lag_{lag}'] = data_.groupby(['type', 'date_block_num'])[f'lag_{lag}'].transform('mean')
@@ -66,20 +66,28 @@ def trans_data(data_, window=3, shift=0):
 	data_["type"] = pd.factorize(data_["type"])[0]
 
 	# 类别特征的encoding
+	# data = data_[data_["date_block_num"] < date]
 	for func in ['mean', 'std']:
 		data_[f'product_label_{func}'] = data_.groupby(['product_id'])["scan_qty"].transform(func)
 		data_[f'type_label_{func}'] = data_.groupby(['type'])["scan_qty"].transform(func)
+		# data_ = data_.merge(data.loc[:, ["product_id", f'product_label_{func}']].drop_duplicates(), how="left", on=["product_id"])
+		# data_ = data_.merge(data.loc[:, ["type", f'type_label_{func}']].drop_duplicates(), how="left", on=["type"])
 
 	# 后续添加销量变动差异
 	return data_
 
 
 if __name__ == '__main__':
-	data = pd.read_csv("output/data_1.csv")
-	fliter_id = [
-		1117, 1131, 1140, 1141, 1142, 1143, 1145, 1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154, 1155, 1156,
-		1157, 1158, 1159, 1160, 1161, 1162
-	]
-	data = trans_data(data, 3)
-	# print(data.head())
-	data.to_csv("output/trans_data_1.csv", index=False)
+	# data = pd.read_csv("output/data_1.csv")
+	# fliter_id = [
+	# 	1117, 1131, 1140, 1141, 1142, 1143, 1145, 1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154, 1155, 1156,
+	# 	1157, 1158, 1159, 1160, 1161, 1162
+	# ]
+	# data = trans_data(data, 3, 2)
+	# # print(data.head())
+	# data.to_csv("output/trans_data_3.csv", index=False)
+
+	path = ["output/trans_data_1.csv", "output/trans_data_2.csv", "output/trans_data_3.csv"]
+	for i in path:
+		data = pd.read_csv(i)
+		print(data.corr()["scan_qty"])

@@ -32,11 +32,13 @@ train_xuqiu_data["date"] = pd.to_datetime(train_xuqiu_data["date"])
 train_xuqiu_data["year_month"] = train_xuqiu_data["date"].dt.strftime("%Y%m")
 train_xuqiu_data["year"] = train_xuqiu_data["date"].dt.year
 train_xuqiu_data["month"] = train_xuqiu_data["date"].dt.month
+# train_xuqiu_data["quarter"] = train_xuqiu_data["date"].dt.quarter
 
 test_xuqiu_data["date"] = pd.to_datetime(test_xuqiu_data["date"])
 test_xuqiu_data["year_month"] = test_xuqiu_data["date"].dt.strftime("%Y%m")
 test_xuqiu_data["year"] = test_xuqiu_data["date"].dt.year
 test_xuqiu_data["month"] = test_xuqiu_data["date"].dt.month
+# test_xuqiu_data["quarter"] = test_xuqiu_data["date"].dt.quarter
 
 train_data = train_xuqiu_data.merge(train_dingdan_data, how="left", on=["product_id", "year", "month"])
 test_data = test_xuqiu_data.merge(test_dingdan_data, how="left", on=["product_id", "year", "month"])
@@ -79,5 +81,4 @@ del data["year_month"]
 del data["all_qty"]
 del data["qty_first_month"]
 del data["qty_month_count"]
-print(data.head())
 data.to_csv("output/data_1.csv", index=False)

@@ -14,7 +14,7 @@ import xgboost as xgb
 from catboost import CatBoostRegressor
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import copy
 
 warnings.filterwarnings('ignore')
@@ -151,8 +151,22 @@ def one_model(clf, train_x, train_y, test_x, clf_name, val_x, val_y):
                 key=lambda x: x[1], reverse=True)
         ))
         print("%s_score:" % clf_name, mean_absolute_error(val_y, val_pred))
+        print("%s_score:" % clf_name, mean_squared_error(val_y, val_pred))
 
-        return val_pred, test_pred
+    elif clf_name == 'cat':
+        params = {'learning_rate': 0.05, 'depth': 9, 'l2_leaf_reg': 10, 'bootstrap_type': "Bayesian",
+                  'od_type': 'Iter', 'od_wait': 50, 'random_seed': 2022, 'allow_writing_files': False,
+                  'eval_metric': "MAE", "random_strength": 10, "bagging_temperature": 2}
+
+        model = clf(iterations=20000, **params)
+        model.fit(train_x, train_y, eval_set=(val_x, val_y),
+                  cat_features=[], use_best_model=True, verbose=3000)
+
+        val_pred = model.predict(val_x)
+        test_pred = model.predict(test_x)
+        # print("%s_score:" % clf_name, mean_absolute_error(val_y, val_pred))
+
+    return val_pred, test_pred
 
 
 def lgb_model(x_train, y_train, x_test, *args):
@@ -168,6 +182,9 @@ def xgb_model(x_train, y_train, x_test):
     return xgb_train, xgb_test
 
 
-def cat_model(x_train, y_train, x_test):
-    cat_train, cat_test = cv_model(CatBoostRegressor, x_train, y_train, x_test, 'cat')
+def cat_model(x_train, y_train, x_test, *args):
+    if args is not None:
+        cat_train, cat_test = one_model(CatBoostRegressor, x_train, y_train, x_test, 'cat', args[0], args[1])
+    else:
+        cat_train, cat_test = cv_model(CatBoostRegressor, x_train, y_train, x_test, 'cat')
     return cat_train, cat_test
