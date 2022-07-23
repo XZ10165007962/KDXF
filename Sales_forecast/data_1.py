@@ -75,10 +75,21 @@ data["mean_qty"] = data["all_qty"] / data["qty_month_count"]
 data["scan_qty"] = data["label_month"] / data["mean_qty"]
 data["date_block_num"] = (data["year"] - 2018) * 12 + data["month"]
 data["scan_qty"].fillna(0, inplace=True)
+
+simple = data[data["year_month"] == data["qty_first_month"]]
+simple["qty_first"] = simple["date_block_num"]
+simple = simple.loc[:, ["product_id", "qty_first"]]
+data = data.merge(simple, on=["product_id"], how="left")
+data["qty_num"] = data["date_block_num"] - data["qty_first"] + 1
+data["qty_num"] = data["qty_num"].map(lambda x: x if x > 0 else 0)
+# del data["qty_num"]
+del data["qty_first"]
+
 del data["label"]
 del data["is_sale_day"]
 del data["year_month"]
 del data["all_qty"]
 del data["qty_first_month"]
 del data["qty_month_count"]
+
 data.to_csv("output/data_1.csv", index=False)

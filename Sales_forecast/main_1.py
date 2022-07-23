@@ -73,7 +73,7 @@ sub = pd.read_csv('data/提交示例.csv')
 sub["label"] = df_test["pre1"].values
 
 sub["label"] = sub["label"].map(lambda x: x if x >= 0 else 0)
-sub["label"] = sub["label"] * 1.05
-sub.loc[sub[sub["label"] == 0].index, ["label"]] = 100
+sub["label"] = sub["label"] * 1.055
+sub.loc[sub[sub["label"] == 0].index, ["label"]] = 200
 
-sub.to_csv('output/baseline0720.csv', index=False)
+sub.to_csv('output/baseline0723.csv', index=False)

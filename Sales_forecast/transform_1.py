@@ -38,7 +38,7 @@ def makelag(data_, values, columns, window, shift=0, if_type=False):
 	:return:
 	"""
 	lags = [i + shift for i in range(1, window+1)]
-	rollings = [i for i in range(2, window+1)]
+	rollings = [i for i in range(2, window+4)]
 	for lag in lags:
 		data_[f'{columns}_lag_{lag}'] = values.shift(lag)
 	for rolling in rollings:
