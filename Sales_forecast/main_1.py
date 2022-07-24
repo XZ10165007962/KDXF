@@ -12,6 +12,7 @@ from sklearn.metrics import mean_absolute_error
 import model_1
 import config
 import transform_1
+import data_1
 
 import pandas as pd
 import numpy as np
@@ -24,7 +25,7 @@ pd.set_option('display.max_rows', None)
 pd.set_option('max_colwidth', 100)
 
 # 读取原始数据
-data = pd.read_csv("output/data_1.csv")
+data = data_1.read_data()
 # data = data[data["qty_month_count"] >= 3]
 data["pre"] = [0]*data.shape[0]
 
@@ -37,7 +38,7 @@ for shift, date in enumerate([37, 38, 39]):
 	columns = use_data.columns
 	del_col = [
 		"label_sum", "label_mean", "label_std", "label_cv", "label_month", "qty_month_count", "date",
-		"date_block_num", "pre", "product_id", "mean_qty",	"scan_qty"
+		"date_block_num", "pre", "product_id", "mean_qty",	"scan_qty", "sale_count"
 	]
 	k_fold = 5
 	test_data = use_data[use_data["date_block_num"] == date]
@@ -59,7 +60,7 @@ for shift, date in enumerate([37, 38, 39]):
 		val_y = val_data.loc[:, label]
 		test_y = test_data.loc[:, label]
 
-		print(f"*****************{i+1}/{k_fold}_lgb模型训练**********************")
+		print(f"*****************{date}-{i+1}/{k_fold}_lgb模型训练**********************")
 		lgb_train, lgb_test = model_1.lgb_model(train_x, train_y, test_x, val_x, val_y)
 		test_pre[:, i] = lgb_test
 	data.loc[test_x.index, ["pre"]] = np.mean(test_pre, 1)
@@ -74,6 +75,6 @@ sub["label"] = df_test["pre1"].values
 
 sub["label"] = sub["label"].map(lambda x: x if x >= 0 else 0)
 sub["label"] = sub["label"] * 1.055
-sub.loc[sub[sub["label"] == 0].index, ["label"]] = 200
+sub.loc[sub[sub["label"] == 0].index, ["label"]] = 300
 
-sub.to_csv('output/baseline0723.csv', index=False)
+sub.to_csv('output/baseline0724.csv', index=False)
