@@ -61,11 +61,10 @@ simple["label_sum"] = simple.groupby(["product_id"])["label"].transform("sum")
 simple["label_mean"] = simple.groupby(["product_id"])["label"].transform("mean")
 simple["label_std"] = simple.groupby(["product_id"])["label"].transform("std")
 simple["label_cv"] = simple["label_std"] / simple["label_mean"]
-simple["sale_count"] = simple.groupby(["product_id", "year_month"])["is_sale_day"].transform("sum")
 simple = simple.loc[:, ["product_id", "year_month", "label_sum", "label_mean", "label_std", "label_cv", "sale_count"]]\
 	.drop_duplicates(["product_id", "year_month"])
 data = data.merge(simple, on=["product_id", "year_month"], how="left")
-
+data["sale_count"] = data.groupby(["product_id", "year_month"])["is_sale_day"].transform("sum")
 """
 在训练集中未发生售卖事件的商品
 1117 1131 1140 1141 1142 1143 1145 1146 1147 1148 1149 1150 1151 1152

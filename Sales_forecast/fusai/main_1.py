@@ -15,6 +15,7 @@ from tqdm import tqdm
 import data
 import transform
 import model
+from utils import get_accuracy
 
 warnings.filterwarnings('ignore')
 # 显示所有列
@@ -31,28 +32,32 @@ data["pre"] = [0]*data.shape[0]
 
 windows = 3
 
-for shift, date in enumerate([40, 41, 42]):
+for shift, date in enumerate([37, 38, 39]):
 	use_data = data[data["date_block_num"] <= date]
 	# 构造数据特征
-	if date == 42:
+	if date == 40:
 		use_data = transform.trans_data(use_data, window=windows, shift=0)
 	else:
 		use_data = transform.trans_data(use_data, window=windows, shift=shift)
+	use_data = use_data.fillna(value=0)
+	cat_feat = ['is_chunjie', "product_id"]
+	for i in cat_feat:
+		use_data[i] = use_data[i].astype('category')
 	columns = use_data.columns
 	del_col = [
 		"label_sum", "label_mean", "label_std", "label_cv", "label_month", "qty_month_count", "date",
-		"date_block_num", "pre", "product_id", "mean_qty",	"scan_qty", "sale_count"
+		"date_block_num", "pre", "mean_qty", "scan_qty", "sale_count", "product_id"
 	]
 	k_fold = 5
 	test_data = use_data[use_data["date_block_num"] == date]
 	test_pre = np.zeros((test_data.shape[0], k_fold))
 	for i in range(k_fold):
-		if date == 42:
-			train_data = use_data[use_data["date_block_num"] < (41-i)]
-			val_data = use_data[use_data["date_block_num"] == (41-i)]
+		if date == 40:
+			train_data = use_data[use_data["date_block_num"] < (38-i)]
+			val_data = use_data[use_data["date_block_num"] == (38-i)]
 		else:
-			train_data = use_data[use_data["date_block_num"] < (39-i)]
-			val_data = use_data[use_data["date_block_num"] == (39-i)]
+			train_data = use_data[use_data["date_block_num"] < (36-i)]
+			val_data = use_data[use_data["date_block_num"] == (36-i)]
 
 		# 目标字段
 		label = ["scan_qty"]
@@ -73,22 +78,30 @@ for shift, date in enumerate([40, 41, 42]):
 	data.loc[test_x.index, ["pre"]] = np.mean(test_pre, 1)
 	data.loc[test_x.index, label] = np.mean(test_pre, 1)
 data["pre1"] = data["pre"] * data["mean_qty"]
-data.to_csv("E:/KDXF/Sales_forecast/output/复赛/tijiao.csv", index=False)
+# data.to_csv("E:/KDXF/Sales_forecast/output/复赛/tijiao.csv", index=False)
+accu = 0
+for i in [37, 38, 39]:
+	df_test_index = data[data["date_block_num"] == i]
+	df_test = data[data["date_block_num"] == i]
+	true = df_test["label_month"].values
+	pred = df_test["pre1"].values
+	accu += get_accuracy(true, pred)
+print(accu / 3)
 
-df_test = data[data["date_block_num"] >= 40]
-df_test = df_test.sort_values(by=['month', 'product_id'])
-sub = pd.read_csv("E:/KDXF/Sales_forecast/output/复赛/data.csv")
-sub = sub.query("year==2021 and month>=4")
-sub = sub.drop_duplicates(['month', 'product_id'])
-sub = sub.loc[:, ["year", 'month', 'product_id']]
-sub = sub.merge(df_test.loc[:, ['month', 'product_id', "pre1"]], how="left", on=['month', 'product_id'])
-sub = df_test.loc[:, ["year", 'month', 'product_id', "pre1"]].rename(columns={'pre1': 'label'})
-sub["month1"] = sub["year"].astype("str")+"-"+sub["month"].astype("str")
-del sub["year"]
-del sub["month"]
-sub = sub.rename(columns={'month1': 'month'})
-sub["label"] = sub["label"].map(lambda x: x if x >= 0 else 0)
-# sub["label"] = sub["label"] * 1.055
-# sub.loc[sub[sub["label"] == 0].index, ["label"]] = 300
-sub = sub.loc[:, ["month", "product_id", "label"]]
-sub.to_csv('E:/KDXF/Sales_forecast/output/复赛/sub.csv', index=False)
+# df_test = data[data["date_block_num"] >= 40]
+# df_test = df_test.sort_values(by=['month', 'product_id'])
+# sub = pd.read_csv("E:/KDXF/Sales_forecast/output/复赛/data.csv")
+# sub = sub.query("year==2021 and month>=4")
+# sub = sub.drop_duplicates(['month', 'product_id'])
+# sub = sub.loc[:, ["year", 'month', 'product_id']]
+# sub = sub.merge(df_test.loc[:, ['month', 'product_id', "pre1"]], how="left", on=['month', 'product_id'])
+# sub = df_test.loc[:, ["year", 'month', 'product_id', "pre1"]].rename(columns={'pre1': 'label'})
+# sub["month1"] = sub["year"].astype("str")+"-"+sub["month"].astype("str")
+# del sub["year"]
+# del sub["month"]
+# sub = sub.rename(columns={'month1': 'month'})
+# sub["label"] = sub["label"].map(lambda x: x if x >= 0 else 0)
+# # sub["label"] = sub["label"] * 1.055
+# # sub.loc[sub[sub["label"] == 0].index, ["label"]] = 300
+# sub = sub.loc[:, ["month", "product_id", "label"]]
+# sub.to_csv('E:/KDXF/Sales_forecast/output/复赛/sub.csv', index=False)

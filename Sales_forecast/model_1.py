@@ -126,7 +126,7 @@ def one_model(clf, train_x, train_y, test_x, clf_name, val_x, val_y):
         params = {
             'boosting_type': 'gbdt',
             'objective': 'regression_l1',  # 回归问题
-            'metric': 'mse',  # 评价指标
+            'metric': 'mae',  # 评价指标
             'min_child_weight': 3,
             'num_leaves': 2 ** 3,
             'lambda_l2': 10,

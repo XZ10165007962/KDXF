@@ -101,7 +101,11 @@ def read_data():
 	data = data.merge(simple, on=["product_id"], how="left")
 	data["qty_num"] = data["date_block_num"] - data["qty_first"] + 1
 	data["qty_num"] = data["qty_num"].map(lambda x: x if x > 0 else 0)
-
+	data["stock_diff"] = data["end_stock"] - data["start_stock"]
+	# 构造春节月
+	data['is_chunjie'] = list(map(lambda x: 1 if x == 2 or x == 14 or x == 26 or x == 38 else 0, data['date_block_num']))
+	# data['is_chunjie_before'] = list(map(lambda x: 1 if x == 1 or x == 13 or x == 25 or x == 37 else 0, data['date_block_num']))
+	# data['is_chunjie_late'] = list(map(lambda x: 1 if x == 3 or x == 15 or x == 27 or x == 39 else 0, data['date_block_num']))
 	# data["order_mean"] = data.groupby(["product_id"])["order"].transform("mean")
 	# data["order"] = data["order"] / data["order_mean"]
 	# del data["order_mean"]

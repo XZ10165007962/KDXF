@@ -55,6 +55,7 @@ def read_data():
 
 	# 月汇集
 	data["label_month"] = data.groupby(["product_id", "year", "month"])["label"].transform("sum")
+	data["sale_count"] = data.groupby(["product_id", "year_month"])["is_sale_day"].transform("sum")
 	data = data.drop_duplicates(["product_id", "year", "month"]).reset_index(drop=True)
 
 	# 统计售卖月份数
@@ -98,4 +99,4 @@ def read_data():
 
 if __name__ == '__main__':
 	data = read_data()
-	data.to_csv("output/data_1.csv", index=False)
+	data.to_csv("output/初赛/data_1.csv", index=False)

@@ -150,7 +150,7 @@ def one_model(clf, train_x, train_y, test_x, clf_name, val_x, val_y):
         }
         model = clf.train(
             params, train_set=train_matrix, num_boost_round=50000, valid_sets=[train_matrix, valid_matrix],
-            categorical_feature=[], verbose_eval=3000, early_stopping_rounds=3000
+            categorical_feature=['is_chunjie'], verbose_eval=3000, early_stopping_rounds=3000
         )
         val_pred = model.predict(data=val_x, num_iteration=model.best_iteration)
         test_pred = model.predict(data=test_x, num_iteration=model.best_iteration)

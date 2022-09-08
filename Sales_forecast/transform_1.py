@@ -78,16 +78,16 @@ def trans_data(data_, window=3, shift=0):
 
 
 if __name__ == '__main__':
-	# data = pd.read_csv("output/data_1.csv")
-	# fliter_id = [
-	# 	1117, 1131, 1140, 1141, 1142, 1143, 1145, 1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154, 1155, 1156,
-	# 	1157, 1158, 1159, 1160, 1161, 1162
-	# ]
-	# data = trans_data(data, 3, 2)
-	# # print(data.head())
-	# data.to_csv("output/trans_data_3.csv", index=False)
+	data = pd.read_csv("output/data_1.csv")
+	fliter_id = [
+		1117, 1131, 1140, 1141, 1142, 1143, 1145, 1146, 1147, 1148, 1149, 1150, 1151, 1152, 1153, 1154, 1155, 1156,
+		1157, 1158, 1159, 1160, 1161, 1162
+	]
+	data = trans_data(data, 0)
+	# print(data.head())
+	data.to_csv("output/trans_data.csv", index=False)
 
-	path = ["output/trans_data_1.csv", "output/trans_data_2.csv", "output/trans_data_3.csv"]
-	for i in path:
-		data = pd.read_csv(i)
-		print(data.corr()["scan_qty"])
+	# path = ["output/trans_data_1.csv", "output/trans_data_2.csv", "output/trans_data_3.csv"]
+	# for i in path:
+	# 	data = pd.read_csv(i)
+	# 	print(data.corr()["scan_qty"])
