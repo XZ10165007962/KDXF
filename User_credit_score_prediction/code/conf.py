@@ -24,8 +24,10 @@ pd.set_option('max_colwidth', 200)
 # 文件路径
 train_data_path = "../xfdata/金融场景下用户信用分预测挑战赛公开数据/data_train.csv"
 test_data_path = "../xfdata/金融场景下用户信用分预测挑战赛公开数据/data_test.csv"
+sample_paht = "../xfdata/金融场景下用户信用分预测挑战赛公开数据/sample_submit.csv"
 predict_data_path = "../prediction_result/"
 tmp_data_paht = "../user_data/tmp_data/"
+model_paht = "../user_data/model_data/"
 
 # 超参数
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

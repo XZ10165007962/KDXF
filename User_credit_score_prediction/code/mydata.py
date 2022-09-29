@@ -53,7 +53,7 @@ class MyDataSet(Dataset):
 				self.data = torch.FloatTensor(data.iloc[dev_index, :-1].values)
 				self.target = torch.FloatTensor(data.iloc[dev_index, -1].values)
 		if model == "test":
-			data = pd.read_csv(conf.test_data_path)
+			data = pd.read_csv(conf.test_data_path).fillna(0)
 			del data["id"]
 			self.data = torch.FloatTensor(data.values)
 		self.data[:, 40:] = (self.data[:, 40:] - self.data[:, 40:].mean(dim=0)) / self.data[:, 40:].std(dim=0)
